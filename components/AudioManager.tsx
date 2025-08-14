@@ -29,9 +29,8 @@ export function AudioManager({
         backgroundMusicRef.current.currentTime = 0
         backgroundMusicRef.current.volume = 0.3
         await backgroundMusicRef.current.play()
-        console.log('Background music playing!')
       } catch (error) {
-        console.warn('Failed to play background music:', error)
+        // Background music autoplay failed
       }
     }
   }, [isMuted])
@@ -46,7 +45,7 @@ export function AudioManager({
   const playCoinSound = useCallback(() => {
     if (coinSoundRef.current && !isMuted) {
       coinSoundRef.current.currentTime = 0
-      coinSoundRef.current.play().catch(console.error)
+              coinSoundRef.current.play().catch(() => {})
     }
   }, [isMuted])
 
@@ -58,7 +57,7 @@ export function AudioManager({
     if (crashSoundRef.current && !isMuted) {
       setLastCrashTime(now)
       crashSoundRef.current.currentTime = 0
-      crashSoundRef.current.play().catch(console.error)
+      crashSoundRef.current.play().catch(() => {})
     }
   }, [isMuted, lastCrashTime])
 
@@ -84,10 +83,9 @@ export function AudioManager({
           // Set volume before playing to ensure it's not muted
           backgroundMusicRef.current.volume = 0.3
           await backgroundMusicRef.current.play()
-          console.log('Background music started successfully!')
         }
       } catch (error) {
-        console.warn('Background music autoplay failed:', error)
+        // Background music autoplay failed
         // If autoplay fails, we'll try to start it on first user interaction
       }
     }
@@ -113,7 +111,7 @@ export function AudioManager({
   useEffect(() => {
     const handleFirstInteraction = () => {
       if (backgroundMusicRef.current && !isMuted && backgroundMusicRef.current.paused) {
-        backgroundMusicRef.current.play().catch(console.error)
+        backgroundMusicRef.current.play().catch(() => {})
       }
       // Remove the listener after first interaction
       document.removeEventListener('click', handleFirstInteraction)

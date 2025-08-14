@@ -33,7 +33,6 @@ export function AuthComponent({ onAuthenticated }: AuthComponentProps) {
         setMessage('❌ Failed to send verification code. Please try again.')
       }
     } catch (error: any) {
-      console.error('Auth initiation error:', error)
       setMessage(`❌ Error: ${error.response?.data?.error || 'Failed to initiate authentication'}`)
     } finally {
       setIsLoading(false)
@@ -64,7 +63,6 @@ export function AuthComponent({ onAuthenticated }: AuthComponentProps) {
         setMessage('❌ Authentication failed. Please check your code and try again.')
       }
     } catch (error: any) {
-      console.error('Auth completion error:', error)
       setMessage(`❌ Error: ${error.response?.data?.error || 'Authentication failed'}`)
     } finally {
       setIsLoading(false)
@@ -87,7 +85,6 @@ export function AuthComponent({ onAuthenticated }: AuthComponentProps) {
         setMessage('❌ Failed to resend code. Please try again.')
       }
     } catch (error: any) {
-      console.error('Resend error:', error)
       setMessage(`❌ Error: ${error.response?.data?.error || 'Failed to resend code'}`)
     } finally {
       setIsLoading(false)

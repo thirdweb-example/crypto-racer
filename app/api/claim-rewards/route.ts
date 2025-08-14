@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { verifySessionAndCsrf } from '@/lib/cookies'
+import { getUserDetails } from '@/lib/thirdweb'
 import axios from 'axios'
 
 interface RewardRequest {
-  userAddress: string
   amount: number
   gameStats: {
     bestTime: number
@@ -13,8 +14,37 @@ interface RewardRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication and CSRF token
+    let authToken: string
+    try {
+      const session = verifySessionAndCsrf(request)
+      authToken = session.authToken
+    } catch (err: any) {
+      const code = err?.message
+      const map: Record<string, number> = {
+        NO_SESSION: 401,
+        INVALID_CSRF: 403,
+        BAD_ORIGIN: 403,
+      }
+      return NextResponse.json({ error: code || 'Unauthorized' }, { status: map[code] || 401 })
+    }
+
     const body: RewardRequest = await request.json()
-    const { userAddress, amount, gameStats, timestamp } = body
+    const { amount, gameStats, timestamp } = body
+
+    // Get user wallet address from thirdweb API
+    let userAddress: string
+    try {
+      const userDetails = await getUserDetails(authToken)
+      userAddress = userDetails.data.address
+      console.log('👤 Retrieved user wallet address:', userAddress?.slice(0, 6) + '...' + userAddress?.slice(-4))
+    } catch (error) {
+      console.error('❌ Failed to get user details:', error)
+      return NextResponse.json(
+        { error: 'Failed to retrieve user wallet address' },
+        { status: 500 }
+      )
+    }
 
     console.log('🎮 Game ended - Processing automatic reward distribution')
     console.log('📊 Reward Details:', {
