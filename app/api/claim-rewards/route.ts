@@ -20,6 +20,12 @@ export async function POST(request: NextRequest) {
       const session = verifySessionAndCsrf(request)
       authToken = session.authToken
     } catch (err: any) {
+      console.error('❌ Session verification failed:', err)
+      console.error('❌ Error details:', {
+        message: err?.message,
+        stack: err?.stack,
+        name: err?.name
+      })
       const code = err?.message
       const map: Record<string, number> = {
         NO_SESSION: 401,
@@ -36,8 +42,7 @@ export async function POST(request: NextRequest) {
     let userAddress: string
     try {
       const userDetails = await getUserDetails(authToken)
-      userAddress = userDetails.data.address
-      console.log('👤 Retrieved user wallet address:', userAddress?.slice(0, 6) + '...' + userAddress?.slice(-4))
+      userAddress = userDetails.data.result.address
     } catch (error) {
       console.error('❌ Failed to get user details:', error)
       return NextResponse.json(
@@ -46,49 +51,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('🎮 Game ended - Processing automatic reward distribution')
-    console.log('📊 Reward Details:', {
-      userAddress: userAddress?.slice(0, 6) + '...' + userAddress?.slice(-4),
-      amount,
-      gameStats,
-      timestamp: new Date(timestamp).toISOString()
-    })
-
     // Server-side verification to prevent cheating
     const verificationResult = await verifyGamePerformance(gameStats, timestamp)
     
     if (!verificationResult.isValid) {
-      console.log('❌ Game performance verification failed:', verificationResult.details)
       return NextResponse.json(
         { error: 'Game performance verification failed' },
         { status: 400 }
       )
     }
 
-    console.log('✅ Game performance verification passed')
-
     // Use the amount sent from the game directly (1 token per coin)
     const verifiedAmount = amount
-    console.log('💰 Using game-calculated reward amount:', verifiedAmount)
-
-    console.log('🚀 Starting token distribution to wallet...')
 
     // Call thirdweb API to distribute tokens
     const tokenDistributionResult = await distributeTokens(userAddress, verifiedAmount)
     
     if (!tokenDistributionResult.success) {
-      console.log('❌ Token distribution failed')
       return NextResponse.json(
         { error: 'Token distribution failed' },
         { status: 500 }
       )
     }
-
-    console.log('🎉 Successfully distributed tokens to wallet!', {
-      userAddress: userAddress?.slice(0, 6) + '...' + userAddress?.slice(-4),
-      amount: verifiedAmount,
-      transactionHash: tokenDistributionResult.transactionHash
-    })
 
     return NextResponse.json({
       success: true,
@@ -108,28 +92,19 @@ export async function POST(request: NextRequest) {
 
 async function verifyGamePerformance(gameStats: any, timestamp: number): Promise<{ isValid: boolean; details: any }> {
   try {
-    console.log('🔍 Verifying game performance...')
-    
     // Verify timestamp is recent (within last 24 hours)
     const now = Date.now()
     const timeDiff = now - timestamp
     const maxAllowedTime = 24 * 60 * 60 * 1000 // 24 hours
     
     if (timeDiff > maxAllowedTime) {
-      console.log('⏰ Game session too old:', Math.floor(timeDiff / 1000 / 60), 'minutes ago')
       return { isValid: false, details: 'Game session too old' }
     }
 
     // Verify game stats are reasonable
     if (gameStats.bestTime < 0 || gameStats.totalRaces < 0) {
-      console.log('⚠️ Invalid game stats:', gameStats)
       return { isValid: false, details: 'Invalid game stats' }
     }
-
-    console.log('✅ Game stats verification passed:', {
-      bestTime: gameStats.bestTime === Infinity ? 'N/A' : Math.floor(gameStats.bestTime / 1000) + 's',
-      totalRaces: gameStats.totalRaces
-    })
 
     // Additional verification logic could include:
     // - Checking against stored game sessions
@@ -145,18 +120,8 @@ async function verifyGamePerformance(gameStats: any, timestamp: number): Promise
 
 async function distributeTokens(userAddress: string, amount: number): Promise<{ success: boolean; transactionHash?: string }> {
   try {
-    console.log('🚀 Preparing token distribution transaction...')
-    console.log('📤 Distribution details:', {
-      userAddress: userAddress?.slice(0, 6) + '...' + userAddress?.slice(-4),
-      amount,
-      contractAddress: process.env.TOKEN_CONTRACT_ADDRESS || '0x761F52fd1a441d3df00f6371774F1dD2cbb1c5cf',
-      chainId: process.env.CHAIN_ID || '43113'
-    })
-    
     // Convert amount to Wei
     const amountInWei = (amount * Math.pow(10, 18)).toString()
-    
-    console.log('📝 Sending mint transaction via thirdweb API...')
 
     // Send the transaction via thirdweb contracts write API
     const response = await axios.post('https://api.thirdweb.com/v1/contracts/write', {
@@ -180,9 +145,6 @@ async function distributeTokens(userAddress: string, amount: number): Promise<{ 
     })
 
     if (response.data.result?.transactionIds && response.data.result.transactionIds.length > 0) {
-      console.log('✅ Transaction submitted successfully:', {
-        transactionId: response.data.result.transactionIds[0]
-      })
       return {
         success: true,
         transactionHash: response.data.result.transactionIds[0]

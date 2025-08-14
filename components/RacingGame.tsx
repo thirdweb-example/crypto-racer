@@ -7,7 +7,6 @@ interface RacingGameProps {
   onGameComplete: (time: number) => void
   onTokensEarned: (tokens: number) => void
   onCoinsCollected: (coins: number) => void
-  userAddress: string
 }
 
 interface Obstacle {
@@ -41,7 +40,7 @@ interface Particle {
   size: number
 }
 
-export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected, userAddress }: RacingGameProps) {
+export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected }: RacingGameProps) {
   const [gameState, setGameState] = useState<'waiting' | 'playing' | 'finished' | 'crashed'>('waiting')
   const [carPosition, setCarPosition] = useState(50) // percentage from left
   const [obstacles, setObstacles] = useState<Obstacle[]>([])
@@ -149,12 +148,10 @@ export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected, u
       onGameComplete(time)
       onCoinsCollected(coinsCollected)
       const totalTokens = calculateRewards(time, coinsCollected)
-      console.log('💥 Crash detected - automatically distributing rewards:', totalTokens, 'tokens')
       onTokensEarned(totalTokens)
       setRewardsDistributed(true)
       rewardsDistributedRef.current = true
     } else {
-      console.log('⚠️ Rewards already distributed, skipping duplicate call')
     }
   }, [time, coinsCollected, onGameComplete, onCoinsCollected, onTokensEarned, rewardsDistributed])
 
@@ -256,11 +253,8 @@ export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected, u
   }, [])
 
   const calculateRewards = useCallback((finalTime: number, coinsCollected: number) => {
-    console.log('🧮 calculateRewards called with:', { finalTime, coinsCollected, score })
-    
     // Reward: 1 token per 5 coins collected
     const finalReward = Math.floor(coinsCollected / 5)
-    console.log('💰 Reward: 1 token per 5 coins =', finalReward, 'tokens (from', coinsCollected, 'coins)')
     
     return finalReward
   }, [])
@@ -379,7 +373,6 @@ export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected, u
       
       // Only spawn if it doesn't overlap with obstacles or other coins
       if (!checkCoinOverlap(newCoin, obstacles, coins)) {
-        console.log('Spawning coin:', newCoin); // Debug log
         setCoins(prev => [...prev, newCoin])
         setCoinId(prev => prev + 1)
       }
@@ -427,7 +420,6 @@ export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected, u
           if (newCoinCount % 5 === 0) {
             // Create special token celebration particles
             createParticles(clampedCarX + CAR_WIDTH / 2, carY + CAR_HEIGHT / 2, 15, 'explosion')
-            console.log('🎉 Token earned! Player collected', newCoinCount, 'coins')
           }
           
           // Trigger coin collection audio
@@ -489,7 +481,6 @@ export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected, u
             
             // Calculate final rewards
             const totalTokens = calculateRewards(finalTime, finalCoins)
-            console.log('🎮 Game ending - calling onTokensEarned with:', totalTokens, 'tokens')
             onTokensEarned(totalTokens)
             setRewardsDistributed(true)
             rewardsDistributedRef.current = true
@@ -718,7 +709,6 @@ export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected, u
             <button
               onClick={() => {
                 if (rewardsDistributedRef.current) {
-                  console.log('⚠️ Rewards already distributed, skipping duplicate call')
                   return
                 }
                 
@@ -734,7 +724,6 @@ export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected, u
                 
                 // Calculate final rewards
                 const totalTokens = calculateRewards(finalTime, finalCoins)
-                console.log('🏁 End Race button clicked - calling onTokensEarned with:', totalTokens, 'tokens')
                 onTokensEarned(totalTokens)
                 setRewardsDistributed(true)
                 rewardsDistributedRef.current = true
@@ -772,7 +761,6 @@ export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected, u
               <button
                 onClick={() => {
                   // Just restart the game - rewards already distributed on crash
-                  console.log('🔄 Restarting game after crash - rewards already distributed')
                   startGame()
                 }}
                 className="modern-button text-white font-bold py-3 px-8 rounded-xl text-lg"

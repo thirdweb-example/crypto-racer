@@ -22,6 +22,7 @@ async function makeThirdwebRequest<T = any>(
     url,
     headers: {
       'Content-Type': 'application/json',
+      "x-secret-key": process.env.THIRDWEB_SECRET_KEY,
       ...options.headers,
     },
     ...(options.data && { data: options.data }),
@@ -39,7 +40,7 @@ async function makeThirdwebRequest<T = any>(
 }
 
 export async function getUserDetails(authToken: string) {
-  const response = await makeThirdwebRequest("/v1/wallets/user/me", {
+  const response = await makeThirdwebRequest("/v1/wallets/me", {
     method: "GET",
     headers: {
       "Authorization": `Bearer ${authToken}`,

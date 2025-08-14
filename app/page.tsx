@@ -142,7 +142,6 @@ export default function Home() {
       }
       
       const rewardData = {
-        userAddress: userAddress,
         amount: tokens,
         gameStats: {
           bestTime: gameStats.bestTime,
@@ -152,10 +151,22 @@ export default function Home() {
       }
 
       console.log('📤 Sending reward data to API:', rewardData)
+      
+      // Get CSRF token from cookie
+      const getCsrfToken = () => {
+        const cookies = document.cookie.split(';')
+        const csrfCookie = cookies.find(cookie => cookie.trim().startsWith('csrf-token='))
+        return csrfCookie ? csrfCookie.split('=')[1] : null
+      }
+      
+      const csrfToken = getCsrfToken()
+      console.log('🔑 CSRF Token:', csrfToken ? 'Present' : 'Missing')
+      
       const response = await fetch('/api/claim-rewards', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken || '',
         },
         body: JSON.stringify(rewardData)
       })
@@ -411,7 +422,6 @@ export default function Home() {
                 onGameComplete={handleGameComplete}
                 onTokensEarned={handleTokensEarned}
                 onCoinsCollected={handleCoinsCollected}
-                userAddress={userAddress!}
               />
             </div>
 
