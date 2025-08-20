@@ -253,7 +253,7 @@ export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected }:
   }, [])
 
   const calculateRewards = useCallback((finalTime: number, coinsCollected: number) => {
-    // Reward: 1 token per 5 coins collected
+    // Reward: 1 $VIBES per 5 coins collected
     const finalReward = Math.floor(coinsCollected / 5)
     
     return finalReward
@@ -416,9 +416,9 @@ export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected }:
           setScore(prevScore => prevScore + 50)
           createParticles(coin.x + coin.width / 2, coin.y + coin.height / 2, 4) // Reduced from 8 to 4
           
-          // Check if player just earned a token (every 5 coins)
+          // Check if player just earned $VIBES (every 5 coins)
           if (newCoinCount % 5 === 0) {
-            // Create special token celebration particles
+            // Create special $VIBES celebration particles
             createParticles(clampedCarX + CAR_WIDTH / 2, carY + CAR_HEIGHT / 2, 15, 'explosion')
           }
           
@@ -571,7 +571,7 @@ export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected }:
             <div className="text-gray-300 text-sm font-medium">COINS</div>
             <div className="text-3xl font-bold text-yellow-400">{coinsCollected}</div>
             <div className="text-xs text-gray-400 mt-1">
-              {coinsCollected % 5 === 0 ? '🎯 Token Ready!' : `${5 - (coinsCollected % 5)} more for token`}
+              {coinsCollected % 5 === 0 ? '🎯 $VIBES Ready!' : `${5 - (coinsCollected % 5)} more for $VIBES`}
             </div>
             <div className="w-full bg-gray-700 rounded-full h-1.5 mt-1">
               <div 
@@ -692,11 +692,11 @@ export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected }:
               <div className="space-y-2 text-sm text-gray-400">
                 <p>🎮 Use A/D or Arrow Keys to move between 4 lanes</p>
                 <p>⚠️ Avoid obstacles (at least 2 lanes always free for easy navigation)</p>
-                <p>🪙 Collect golden coins for tokens (5 coins = 1 token)</p>
+                <p>🪙 Collect golden coins for $VIBES (5 coins = 1 $VIBES)</p>
                 <p>🏁 End race anytime to automatically receive rewards</p>
                 <div className="mt-3 p-3 bg-blue-500/20 rounded-lg border border-blue-500/30">
                   <p className="text-blue-300 font-medium">💡 Pro Tip:</p>
-                  <p className="text-blue-200/80 text-xs">Every 5 coins collected = 1 token automatically sent to your wallet!</p>
+                  <p className="text-blue-200/80 text-xs">Every 5 coins collected = 1 $VIBES automatically sent to your wallet!</p>
                 </div>
               </div>
             </div>
@@ -754,7 +754,7 @@ export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected }:
                 <div className="text-2xl mb-2">🎉</div>
                 <p className="text-green-300 font-semibold">Rewards Sent to Wallet!</p>
                 <p className="text-green-200/80 text-sm">
-                  {coinsCollected} coins = {Math.floor(coinsCollected / 5)} tokens distributed
+                  {coinsCollected} coins = {Math.floor(coinsCollected / 5)} $VIBES distributed
                 </p>
               </div>
               
@@ -797,7 +797,7 @@ export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected }:
                 <div className="text-2xl mb-2">🎉</div>
                 <p className="text-green-300 font-semibold">Rewards Sent to Wallet!</p>
                 <p className="text-green-200/80 text-sm">
-                  {coinsCollected} coins = {Math.floor(coinsCollected / 5)} tokens distributed
+                  {coinsCollected} coins = {Math.floor(coinsCollected / 5)} $VIBES distributed
                 </p>
               </div>
               
@@ -840,7 +840,7 @@ export function RacingGame({ onGameComplete, onTokensEarned, onCoinsCollected }:
             </div>
           </div>
           <p className="text-gray-400 mt-4 text-sm">
-            🪙 Collect golden coins to earn tokens! (5 coins = 1 token) 🏁 End the race to automatically receive rewards in your wallet.
+            🪙 Collect golden coins to earn $VIBES! (5 coins = 1 $VIBES) 🏁 End the race to automatically receive rewards in your wallet.
           </p>
         </div>
       </div>

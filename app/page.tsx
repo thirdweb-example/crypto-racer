@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { RacingGame } from '@/components/RacingGame'
 import { AuthComponent } from '@/components/AuthComponent'
+import { env } from '@/lib/env'
 
 
 
@@ -25,6 +26,49 @@ export default function Home() {
     totalRaces: 0,
     totalCoins: 0
   })
+  const [vibesBalance, setVibesBalance] = useState<string>('0')
+
+  // Function to fetch VIBES balance directly from API
+  const fetchVibesBalance = async (userAddress: string): Promise<string> => {
+    try {
+      const response = await fetch(`${env.THIRDWEB_API_BASE_URL}/v1/contracts/read`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-client-id': env.THIRDWEB_CLIENT_ID,
+        },
+        body: JSON.stringify({
+          calls: [
+            {
+              contractAddress: "0x761F52fd1a441d3df00f6371774F1dD2cbb1c5cf",
+              method: "function balanceOf(address account) view returns (uint256)",
+              params: [userAddress]
+            }
+          ],
+          chainId: parseInt(env.CHAIN_ID)
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      // Handle the actual response format: {result: [{data: "95000000000000000000", success: true}]}
+      if (data.result && Array.isArray(data.result) && data.result[0] && data.result[0].success && data.result[0].data) {
+        const rawBalance = data.result[0].data
+        // Convert from wei (18 decimals) to actual token amount
+        const balance = (BigInt(rawBalance) / BigInt(10 ** 18)).toString()
+        return balance
+      } else {
+        throw new Error('Invalid API response format')
+      }
+    } catch (error) {
+      console.error('❌ Failed to fetch VIBES balance:', error)
+      return '0'
+    }
+  }
 
   // Check for saved authentication on page load
   useEffect(() => {
@@ -38,12 +82,17 @@ export default function Home() {
         // Check if the saved auth is still valid (not expired)
         if (now - authData.timestamp < maxAge) {
           // Simulate a brief loading delay for better UX
-          setTimeout(() => {
+          setTimeout(async () => {
             setIsAuthenticated(true)
             setUserAddress(authData.userAddress)
             setUserEmail(authData.email)
             setLoginTimestamp(authData.timestamp)
             setIsLoading(false)
+            
+            // Load $VIBES balance
+            const balance = await fetchVibesBalance(authData.userAddress)
+            setVibesBalance(balance)
+            
             setToastMessage({
               title: 'Welcome back!',
               subtitle: `You've been automatically logged in as ${authData.email}`,
@@ -71,12 +120,16 @@ export default function Home() {
     }
   }, [])
 
-  const handleAuthenticated = (address: string, email: string, rememberMe: boolean = true) => {
+  const handleAuthenticated = async (address: string, email: string, rememberMe: boolean = true) => {
     const now = Date.now()
     setIsAuthenticated(true)
     setUserAddress(address)
     setUserEmail(email)
     setLoginTimestamp(now)
+    
+    // Load $VIBES balance
+    const balance = await fetchVibesBalance(address)
+    setVibesBalance(balance)
     
     // Save authentication data if remember me is enabled
     if (rememberMe) {
@@ -104,6 +157,7 @@ export default function Home() {
     setUserAddress(null)
     setUserEmail(null)
     setLoginTimestamp(null)
+    setVibesBalance('0')
     localStorage.removeItem('cryptoRacerAuth')
     
     // Show logout confirmation
@@ -118,12 +172,18 @@ export default function Home() {
     console.log('👋 Logged out successfully')
   }
 
-  const handleGameComplete = (time: number) => {
+  const handleGameComplete = async (time: number) => {
     setGameStats(prev => ({
       ...prev,
       bestTime: Math.min(prev.bestTime, time),
       totalRaces: prev.totalRaces + 1
     }))
+    
+    // Refresh $VIBES balance after game
+    if (userAddress) {
+      const newBalance = await fetchVibesBalance(userAddress)
+      setVibesBalance(newBalance)
+    }
   }
 
   const handleTokensEarned = async (tokens: number) => {
@@ -220,6 +280,21 @@ export default function Home() {
       ...prev,
       totalCoins: prev.totalCoins + coins
     }))
+  }
+
+  const refreshVibesBalance = async () => {
+    if (userAddress) {
+      const newBalance = await fetchVibesBalance(userAddress)
+      setVibesBalance(newBalance)
+      
+      setToastMessage({
+        title: 'Balance Updated!',
+        subtitle: `$VIBES balance refreshed`,
+        isAutoLogin: false
+      })
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 2000)
+    }
   }
 
   return (
@@ -405,9 +480,11 @@ export default function Home() {
               <div className="dashboard-card bg-gradient-to-r from-green-500/20 to-green-600/20 backdrop-blur-xl rounded-2xl p-6 border border-green-500/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 card-entrance">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-green-200 text-sm font-medium mb-1">Auto Rewards</p>
-                    <p className="text-3xl font-black text-green-300">Enabled</p>
-                    <p className="text-green-200/60 text-xs">Sent to Wallet</p>
+                    <p className="text-green-200 text-sm font-medium mb-1">$VIBES</p>
+                    <p className="text-3xl font-black text-green-300">
+                      {parseInt(vibesBalance) > 0 ? parseInt(vibesBalance).toLocaleString() : '0'}
+                    </p>
+                    <p className="text-green-200/60 text-xs">Total Balance</p>
                   </div>
                   <div className="w-12 h-12 bg-green-500/30 rounded-full flex items-center justify-center text-2xl shadow-lg">
                     🎉
